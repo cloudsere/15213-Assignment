@@ -169,7 +169,14 @@ int getByte(int x, int n) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
-  return 2;
+  /* 这道题我一开始尝试的是~(0xffffffff << (32-n)) & (x >> n)，但始终通不过测试，
+   * 后来在stackoverflow上找到解释：https://stackoverflow.com/questions/3871650/gcc-left-shift-overflow
+   * The C99 standard says that the result of shifting a number by the width in bits (or more) of the operand is undefined。
+   * The C99 standard allows the compiler to simply take the bottom five bits of the shift count and put them in the field. 
+   * Clearly this means that a shift of 32 bits (= 100000 in binary) is therefore identical to a shift of 0 and the result 
+   * will therefore be the left operand unchanged.
+   */
+  return ~(0xffffffff << (31-n) << 1) & (x >> n);
 }
 /*
  * bitCount - returns count of number of 1's in word
