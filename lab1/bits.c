@@ -171,7 +171,7 @@ int logicalShift(int x, int n) {
   return ~(0xffffffff << (31-n) << 1) & (x >> n);
 }
 /*
- * bitCount - returns count of number of 1's in word
+ * bitCount - returns count of       number of 1's in word
  *   Examples: bitCount(5) = 2, bitCount(7) = 3
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 40
@@ -188,7 +188,7 @@ int bitCount(int x) {
  *   Rating: 4
  */
 int bang(int x) {
-  return 2;
+  return (~(x+1) | x) >> 31 & 0x0000000F;
 }
 /*
  * tmin - return minimum two's complement integer
