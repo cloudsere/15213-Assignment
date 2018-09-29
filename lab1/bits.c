@@ -240,6 +240,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
+  /* 逻辑非:C语言将0转化为1，将非零值转化为0。*/
   return !((x-1) >> 31 & 0x00000001);
 }
 /*
@@ -250,7 +251,11 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+    int sign_x = x >> 31;
+    int sign_y = y >> 31;
+    int sign_same = !((y + ~x + 1) >> 31 & 1) & !(sign_x ^ sign_y);
+    int sign_diff = (!sign_y) & sign_x;
+    return sign_diff | sign_same;
 }
 /*
  * ilog2 - return floor(log base 2 of x), where x > 0
@@ -260,7 +265,29 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
-  return 2;
+  /* 这道题其实需要找到最左边的1, 我一开始没有想出来，看了其他人的解答才发现可以用2分的方法做，不停的2分，判断左边的一半有没有1，如果左边的一半有1， 就加上2分的长度。 */
+  int output = 0;
+
+  int temp = (!!(x >> 16))<<31>>31;
+  output += temp & 16;
+  x = x >> (temp & 16);
+ 
+  temp = (!!(x >> 8))<<31>>31;
+  output += temp & 8;
+  x = x >> (temp & 8);
+
+  temp = (!!(x >> 4))<<31>>31;
+  output += temp & 4;
+  x = x >> (temp & 4);
+
+  temp = (!!(x >> 2))<<31>>31;
+  output += temp & 2;
+  x = x >> (temp & 2);
+
+  temp = (!!(x >> 1))<<31>>31;
+  output += temp & 1;
+  x = x >> (temp & 1);
+  return output;
 }
 /*
  * float_neg - Return bit-level equivalent of expression -f for
