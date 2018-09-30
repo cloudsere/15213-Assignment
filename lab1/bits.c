@@ -188,7 +188,8 @@ int bitCount(int x) {
  *   Rating: 4
  */
 int bang(int x) {
-  return (~(x+1) | x) >> 31 & 0x0000000F;
+  int temp = x | (~x + 1);
+  return (~(temp >> 31)) & 0x00000001;
 }
 /*
  * tmin - return minimum two's complement integer
@@ -301,7 +302,22 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+  unsigned is_negative = !!(uf & 0x80000000); 
+  unsigned exponent = (uf << 1) >> 24;
+  unsigned fraction = uf & 0x7fffff;
+
+  unsigned exponent_all_one = !(exponent ^ 0xff);
+  unsigned is_nan = exponent_all_one && fraction;
+
+  if(is_nan){
+    return uf;
+  }
+  
+  if(is_negative == 1){
+    return uf & 0x7fffffff;
+  }else{
+    return uf | 0x80000000;
+  }
 }
 /*
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -313,7 +329,9 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  return 2;
+  /* float->int: truncates fractional part*/
+  unsigned exponent = ((x << 1) >> 24) & 0xff;
+  return exponent;
 }
 /*
  * float_twice - Return bit-level equivalent of expression 2*f for
