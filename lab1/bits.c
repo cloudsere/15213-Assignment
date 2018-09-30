@@ -327,5 +327,42 @@ unsigned float_i2f(int x) {
  *   Rating: 4
  */
 unsigned float_twice(unsigned uf) {
-  return 2;
+  /* 32位浮点数的表示为 V = (-1)^s * M * 2^E
+   * 其中最高位表示s，接下来的8位用来表示E，最后23位表示分数M
+   * 浮点数*2可以理解为 M*2 
+   *
+   * 当8位表示的e不是全0也不是全1时，E = unsigned e - Bias， Bias是2^(k-1)，此时M = 1 + f, f是0.xxx
+   *
+   * 当e全是0时，E = 1 - Bias, M = f
+   *
+   * 当e全是1, fraction全是0时，浮点数表示的是infinity，可能是+infinity或者是-infinity,
+   * 当e全是1，fraction非0， 表示NaN
+   * */
+  unsigned exponent = (uf << 1) >> 24;
+  unsigned fraction = uf & 0x7fffff;
+
+  unsigned uf_is_zero = !(uf & 0x7fffffff);
+
+  unsigned exponent_all_one = !(exponent ^ 0xff);
+  unsigned fraction_all_zero = !fraction;
+
+  unsigned uf_is_infinity = exponent_all_one && fraction_all_zero;
+  unsigned uf_is_nan = exponent_all_one && !fraction_all_zero;
+
+  if(uf_is_zero || uf_is_infinity || uf_is_nan){
+    return uf;
+  }else if(!exponent){
+    /* 这种情况直接把f << 1， 来计算*2的结果
+     * 但是需要考虑f<<1溢出的情况
+     * */
+    unsigned temp_fraction = fraction << 1;
+    fraction = temp_fraction & 0x7fffff;
+    if(temp_fraction & 0x800000){
+      return (uf & 0x80000000) | 0x00800000 | fraction;
+    }else{
+      return (uf & 0xff800000) | fraction;
+    }
+  }else{
+    return uf + 0x00800000;
+  }
 }
