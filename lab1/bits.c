@@ -164,8 +164,8 @@ int logicalShift(int x, int n) {
   /* 这道题我一开始尝试的是~(0xffffffff << (32-n)) & (x >> n)，但始终通不过测试，
    * 后来在stackoverflow上找到解释：https://stackoverflow.com/questions/3871650/gcc-left-shift-overflow
    * The C99 standard says that the result of shifting a number by the width in bits (or more) of the operand is undefined。
-   * The C99 standard allows the compiler to simply take the bottom five bits of the shift count and put them in the field. 
-   * Clearly this means that a shift of 32 bits (= 100000 in binary) is therefore identical to a shift of 0 and the result 
+   * The C99 standard allows the compiler to simply take the bottom five bits of the shift count and put them in the field.
+   * Clearly this means that a shift of 32 bits (= 100000 in binary) is therefore identical to a shift of 0 and the result
    * will therefore be the left operand unchanged.
    */
   return ~(0xffffffff << (31-n) << 1) & (x >> n);
@@ -277,7 +277,7 @@ int ilog2(int x) {
   int temp = (!!(x >> 16))<<31>>31;
   output += temp & 16;
   x = x >> (temp & 16);
- 
+
   temp = (!!(x >> 8))<<31>>31;
   output += temp & 8;
   x = x >> (temp & 8);
@@ -307,7 +307,7 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
-  unsigned is_negative = !!(uf & 0x80000000); 
+  unsigned is_negative = !!(uf & 0x80000000);
   unsigned exponent = (uf << 1) >> 24;
   unsigned fraction = uf & 0x7fffff;
 
@@ -317,7 +317,7 @@ unsigned float_neg(unsigned uf) {
   if(is_nan){
     return uf;
   }
-  
+
   if(is_negative == 1){
     return uf & 0x7fffffff;
   }else{
@@ -333,10 +333,38 @@ unsigned float_neg(unsigned uf) {
  *   Max ops: 30
  *   Rating: 4
  */
+// anwser from https://wdxtub.com/2016/04/16/thick-csapp-lab-1/
 unsigned float_i2f(int x) {
-  /* float->int: truncates fractional part*/
-  unsigned exponent = ((x << 1) >> 24) & 0xff;
-  return exponent;
+    int sign=x>>31&1;
+    int i;
+    int exponent;
+    int fraction = 0;
+    int delta;
+    int fraction_mask;
+    if(x==0){
+      return x;
+    }else if(x==0x80000000)
+        exponent=158;
+    else{
+        if (sign)//turn negtive to positive
+            x = -x;
+        i = 30;
+        while ( !(x >> i) )//see how many bits do x have(rightshift until 0)
+            i--;
+        //printf("%x %d\n",x,i);
+        exponent = i + 127;
+        x = x << (31 - i);//clean all those zeroes of high bits
+        fraction_mask = 0x7fffff;//(1 << 23) - 1;
+        fraction = fraction_mask & (x >> 8);//right shift 8 bits to become the fraction,sign and exp have 8 bits total
+        x = x & 0xff;
+        delta = x > 128 || ((x == 128) && (fraction & 1));//if lowest 8 bits of x is larger than a half,or is 1.5,round up 1
+        fraction += delta;
+        if(fraction >> 23) {//if after rounding fraction is larger than 23bits
+            fraction &= fraction_mask;
+            exponent += 1;
+        }
+    }
+    return (sign<<31)|(exponent<<23)|fraction;
 }
 /*
  * float_twice - Return bit-level equivalent of expression 2*f for
@@ -352,7 +380,7 @@ unsigned float_i2f(int x) {
 unsigned float_twice(unsigned uf) {
   /* 32位浮点数的表示为 V = (-1)^s * M * 2^E
    * 其中最高位表示s，接下来的8位用来表示E，最后23位表示分数M
-   * 浮点数*2可以理解为 M*2 
+   * 浮点数*2可以理解为 M*2
    *
    * 当8位表示的e不是全0也不是全1时，E = unsigned e - Bias， Bias是2^(k-1)，此时M = 1 + f, f是0.xxx
    *
