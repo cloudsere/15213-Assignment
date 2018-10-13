@@ -226,7 +226,9 @@ int fitsBits(int x, int n) {
  *   Rating: 2
  */
 int divpwr2(int x, int n) {
-    return x >> n;
+    int sign = x>>31&1;
+    int divisible = !((x | (0xffffffff << n)) ^ (0xffffffff << n));
+    return (x >> n) + ((!!n) & sign & !divisible);
 }
 /*
  * negate - return -x
